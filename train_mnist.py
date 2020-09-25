@@ -11,7 +11,7 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from .networks import small_cnn
+from networks import small_cnn
 
 
 def train_epoch(
@@ -109,4 +109,4 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         train_epoch(model, train_loader, optimizer, epoch + 1)
         test(model, test_loader)
-        torch.save(model.state_dict(), f'checkpoints/small_cnn_{args.epochs:02d}.pt')
+        torch.save(model.state_dict(), f'checkpoints/small_cnn_{epoch + 1:02d}.pt')
