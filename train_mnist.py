@@ -1,4 +1,6 @@
+import argparse
 import random
+import sys
 
 import numpy as np
 import torch
@@ -82,22 +84,29 @@ def mnist_loader(batch_size: int, train: bool) -> DataLoader:
 
 
 if __name__ == '__main__':
-    batch_size = 64
-    epochs = 1
-    lr = 0.01
-    seed = 42
+    parser = argparse.ArgumentParser(
+        description='Train a basic model on MNIST',
+        usage='python3 train_mnist.py '
+              '[--batch-size BATCH-SIZE --epochs EPOCHS --lr LR --seed SEED]',
+    )
+    parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
+    parser.add_argument('--epochs', type=int, default=15, help='Number of epochs')
+    parser.add_argument('--lr', type=float, default=0.01, help='Learning rate')
+    parser.add_argument('--seed', type=int, default=42, help='Random seed')
 
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+    args = parser.parse_args(sys.argv[2:])
+
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
 
     model = small_cnn()
-    optimizer = optim.SGD(model.parameters(), lr=lr)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr)
 
-    train_loader = mnist_loader(batch_size, train=True)
-    test_loader = mnist_loader(batch_size, train=False)
+    train_loader = mnist_loader(args.batch_size, train=True)
+    test_loader = mnist_loader(args.batch_size, train=False)
 
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         train_epoch(model, train_loader, optimizer, epoch + 1)
         test(model, test_loader)
-        torch.save(model.state_dict(), f'checkpoints/small_cnn_{epochs:02d}.pt')
+        torch.save(model.state_dict(), f'checkpoints/small_cnn_{args.epochs:02d}.pt')
