@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-def small_cnn() -> nn.Module:
+def small_cnn(checkpoint_path: str = '') -> nn.Module:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net = nn.Sequential(
         nn.Conv2d(1, 4, 3, 1),
@@ -17,4 +17,6 @@ def small_cnn() -> nn.Module:
         nn.LogSoftmax(dim=1),
     )
     net = net.to(device)
+    if checkpoint_path:
+        net.load_state_dict(torch.load(checkpoint_path, map_location=device))
     return net

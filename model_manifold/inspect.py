@@ -1,15 +1,11 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd.functional import jacobian
-
-from networks import small_cnn
-
-checkpoint = 'checkpoint/small_cnn_01.pt'
-network = small_cnn()
-network.load_state_dict(torch.load(checkpoint, map_location=network.device))
+from torchvision import transforms
+from tqdm import trange
 
 
 def project_kernel(jac: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
@@ -32,13 +28,14 @@ def constant_direction(
         start: torch.Tensor,
         direction: torch.Tensor,
         projection: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
-        step_size: float = 0.01,
+        step_size: float = 0.1,
         steps: int = 5000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
+    direction = direction.flatten()
     evolution = [start]
     point = start
-    for i in range(steps):
+    for i in trange(steps):
         # noinspection PyTypeChecker
         j = jacobian(model, start.unsqueeze(0)).squeeze(0)
         j = F.normalize(j.reshape(j.size(0), -1).T, dim=0)
@@ -53,7 +50,7 @@ def constant_direction_kernel(
         model: nn.Module,
         start: torch.Tensor,
         direction: torch.Tensor,
-        step_size: float = 0.01,
+        step_size: float = 0.1,
         steps: int = 5000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
@@ -72,7 +69,7 @@ def constant_direction_tangent(
         model: nn.Module,
         start: torch.Tensor,
         direction: torch.Tensor,
-        step_size: float = 0.01,
+        step_size: float = 0.1,
         steps: int = 5000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
@@ -92,20 +89,27 @@ def path(
         start: torch.Tensor,
         end: torch.Tensor,
         projection: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
-        step_size: float = 0.01,
+        step_size: float = 0.1,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
     evolution = [start]
     point = start
-    while torch.norm(end - point) > threshold:
+    distance = torch.norm(end - point)
+    print(f'Iteration {len(evolution) - 1:05d} - Distance {distance:.04f}\r', end='')
+    while distance > threshold:
         # noinspection PyTypeChecker
         j = jacobian(model, start.unsqueeze(0)).squeeze(0)
         j = F.normalize(j.reshape(j.size(0), -1).T, dim=0)
-        displacement = projection(j, end - point)
-        displacement = F.normalize(displacement, dim=-1).reshape(evolution[-1])
+        direction = (end - point).flatten()
+        displacement = projection(j, direction)
+        displacement = F.normalize(displacement, dim=-1).reshape(start.shape)
         point = post_processing(point + step_size * displacement)
         evolution.append(point)
+        distance = torch.norm(end - point)
+        print(
+            f'Iteration {len(evolution) - 1:05d} - Distance {distance:.04f}\r', end=''
+        )
     return torch.stack(evolution, dim=0)
 
 
@@ -145,3 +149,13 @@ def path_tangent(
         threshold=threshold,
         post_processing=post_processing,
     )
+
+
+def domain_projection(
+        x: torch.Tensor,
+        normalization: transforms.Normalize,
+        domain: Tuple[float, float] = (0.0, 1.0),
+) -> torch.Tensor:
+    inf = torch.tensor(domain[0]).reshape(1, 1, 1)
+    sup = torch.tensor(domain[1]).reshape(1, 1, 1)
+    return torch.clamp(x, normalization(inf).item(), normalization(sup).item())
