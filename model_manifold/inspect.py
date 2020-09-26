@@ -35,14 +35,15 @@ def constant_direction(
     direction = direction.flatten()
     evolution = [start]
     point = start
-    for i in trange(steps):
+    for _ in trange(steps):
         # noinspection PyTypeChecker
         j = jacobian(model, start.unsqueeze(0)).squeeze(0)
-        j = F.normalize(j.reshape(j.size(0), -1).T, dim=0)
-        displacement = projection(j, direction)
-        displacement = F.normalize(displacement, dim=-1).reshape(evolution[-1])
-        point = post_processing(point + step_size * displacement)
-        evolution.append(point)
+        with torch.no_grad():
+            j = F.normalize(j.reshape(j.size(0), -1).T, dim=0)
+            displacement = projection(j, direction)
+            displacement = F.normalize(displacement, dim=-1).reshape(start.shape)
+            point = post_processing(point + step_size * displacement)
+            evolution.append(point.detach())
     return torch.stack(evolution, dim=0)
 
 
@@ -99,7 +100,7 @@ def path(
     print(f'Iteration {len(evolution) - 1:05d} - Distance {distance:.04f}\r', end='')
     while distance > threshold:
         # noinspection PyTypeChecker
-        j = jacobian(model, start.unsqueeze(0)).squeeze(0)
+        j = jacobian(model, point.unsqueeze(0)).squeeze(0)
         j = F.normalize(j.reshape(j.size(0), -1).T, dim=0)
         direction = (end - point).flatten()
         displacement = projection(j, direction)
@@ -117,7 +118,7 @@ def path_kernel(
         model: nn.Module,
         start: torch.Tensor,
         end: torch.Tensor,
-        step_size: float = 0.01,
+        step_size: float = 0.1,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
@@ -136,7 +137,7 @@ def path_tangent(
         model: nn.Module,
         start: torch.Tensor,
         end: torch.Tensor,
-        step_size: float = 0.01,
+        step_size: float = 0.1,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:

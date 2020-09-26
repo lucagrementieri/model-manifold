@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
     parser.add_argument('--epochs', type=int, default=15, help='Number of epochs')
     parser.add_argument('--lr', type=float, default=0.01, help='Learning rate')
-    parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.add_argument('--seed', type=int, default=1, help='Random seed')
 
     args = parser.parse_args(sys.argv[2:])
 
