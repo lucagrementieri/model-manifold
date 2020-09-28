@@ -35,7 +35,7 @@ def export_mnist_path(
         start_image = test_mnist[start_idx][0]
         p = torch.exp(network(start_image.unsqueeze(0)))
         # noinspection PyTypeChecker
-        while torch.any(p > 0.9) or start_idx == end_idx:
+        while torch.any(p > 0.99) or start_idx == end_idx:
             start_idx = random.randrange(len(test_mnist))
             start_image = test_mnist[start_idx][0]
             p = torch.exp(network(start_image.unsqueeze(0)))
@@ -43,7 +43,7 @@ def export_mnist_path(
         start_image = test_mnist[start_idx][0]
         p = torch.exp(network(start_image.unsqueeze(0)))
         # noinspection PyTypeChecker
-        if torch.any(p > 0.9):
+        if torch.any(p > 0.99):
             print(
                 'Warning: the manifold path could be hard to find because '
                 'the model is too confident on the selected start image.'
@@ -64,7 +64,7 @@ def export_mnist_path(
         network,
         test_mnist[start_idx][0],
         test_mnist[end_idx][0],
-        steps=5000,
+        steps=10000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
     data_path = denormalize(data_path, normalize)
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         '--start', type=int, default=-1, help='Index of the starting image'
     )
     parser.add_argument('--end', type=int, default=-1, help='Index of ending image')
-    parser.add_argument('--seed', type=int, default=1, help='Random seed')
+    parser.add_argument('--seed', type=int, default=123, help='Random seed')
     parser.add_argument(
         '--output-dir', type=str, default='outputs', help='Output directory',
     )
