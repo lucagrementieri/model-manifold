@@ -9,16 +9,16 @@ from tqdm import trange
 
 
 def project_kernel(jac: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
-    kernel_basis = torch.qr(jac, some=False).Q[:, jac.size(1) - 1:]
+    kernel_basis = torch.qr(jac, some=False).Q[:, jac.shape[1] - 1:]
     coefficients = torch.lstsq(direction.unsqueeze(1), kernel_basis).solution
-    coefficients = coefficients[: kernel_basis.size(1), 0]
+    coefficients = coefficients[: kernel_basis.shape[1], 0]
     displacement = torch.matmul(kernel_basis, coefficients)
     return displacement
 
 
 def project_tangent(jac: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
     coefficients = torch.lstsq(direction.unsqueeze(1), jac).solution
-    coefficients = coefficients[: jac.size(1), 0]
+    coefficients = coefficients[: jac.shape[1], 0]
     displacement = torch.matmul(jac, coefficients)
     return displacement
 
@@ -29,17 +29,17 @@ def constant_direction(
         direction: torch.Tensor,
         projection: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
         step_size: float = 0.1,
-        steps: int = 5000,
+        steps: int = 1000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
-    direction = direction.flatten()
+    direction = torch.flatten(direction)
     evolution = [start]
     point = start
     for _ in trange(steps):
         # noinspection PyTypeChecker
         j = jacobian(model, point.unsqueeze(0)).squeeze(0)
         with torch.no_grad():
-            j = F.normalize(j.reshape(j.size(0), -1).T, dim=0)
+            j = F.normalize(j.reshape(j.shape[0], -1).T, dim=0)
             displacement = projection(j, direction)
             displacement = F.normalize(displacement, dim=-1).reshape(start.shape)
             point = post_processing(point + step_size * displacement)
@@ -52,7 +52,7 @@ def constant_direction_kernel(
         start: torch.Tensor,
         direction: torch.Tensor,
         step_size: float = 0.1,
-        steps: int = 5000,
+        steps: int = 1000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
     return constant_direction(
@@ -71,7 +71,7 @@ def constant_direction_tangent(
         start: torch.Tensor,
         direction: torch.Tensor,
         step_size: float = 0.1,
-        steps: int = 5000,
+        steps: int = 1000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
     return constant_direction(
@@ -91,6 +91,7 @@ def path(
         end: torch.Tensor,
         projection: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
         step_size: float = 0.1,
+        steps: int = 10000,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
@@ -98,17 +99,21 @@ def path(
     point = start
     distance = torch.norm(end - point)
     print(f'Iteration {len(evolution) - 1:05d} - Distance {distance:.04f}\r', end='')
-    while distance > threshold:
+    while distance > threshold and len(evolution) < steps:
         # noinspection PyTypeChecker
         j = jacobian(model, point.unsqueeze(0)).squeeze(0)
         with torch.no_grad():
-            j = F.normalize(j.reshape(j.size(0), -1).T, dim=0)
+            j = F.normalize(j.reshape(j.shape[0], -1).T, dim=0)
             direction = (end - point).flatten()
             displacement = projection(j, direction)
             displacement = F.normalize(displacement, dim=-1).reshape(start.shape)
             point = post_processing(point + step_size * displacement)
             evolution.append(point.detach())
             distance = torch.norm(end - point)
+            print(
+                f'Iteration {len(evolution) - 1:05d} - Distance {distance:.04f}\r',
+                end='',
+            )
     return torch.stack(evolution, dim=0)
 
 
@@ -117,6 +122,7 @@ def path_kernel(
         start: torch.Tensor,
         end: torch.Tensor,
         step_size: float = 0.1,
+        steps: int = 10000,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
@@ -126,6 +132,7 @@ def path_kernel(
         end,
         projection=project_kernel,
         step_size=step_size,
+        steps=steps,
         threshold=threshold,
         post_processing=post_processing,
     )
@@ -136,6 +143,7 @@ def path_tangent(
         start: torch.Tensor,
         end: torch.Tensor,
         step_size: float = 0.1,
+        steps: int = 10000,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> torch.Tensor:
@@ -145,6 +153,7 @@ def path_tangent(
         end,
         projection=project_tangent,
         step_size=step_size,
+        steps=steps,
         threshold=threshold,
         post_processing=post_processing,
     )

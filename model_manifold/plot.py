@@ -1,18 +1,25 @@
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union
 
 import imageio
 import torch
+import torch.nn.functional as F
 from torchvision import transforms
 
 
-def to_gif(images: torch.Tensor, output_path: Union[str, Path]) -> None:
+def to_gif(
+        images: torch.Tensor,
+        output_path: Union[str, Path],
+        step: int = 1,
+        scale_factor: float = 1.0,
+) -> None:
     # noinspection PyArgumentList
+    images = F.interpolate(images, scale_factor=scale_factor)
     images = images.permute(0, 2, 3, 1).squeeze_(-1)
     images = torch.round(images * 255).to(torch.uint8)
     images = images.cpu()
     images = torch.unbind(images)
-    imageio.mimsave(str(output_path), images)
+    imageio.mimsave(str(output_path), images[::step])
 
 
 def denormalize(x: torch.Tensor, normalization: transforms.Normalize) -> torch.Tensor:
@@ -21,13 +28,3 @@ def denormalize(x: torch.Tensor, normalization: transforms.Normalize) -> torch.T
     x *= std
     x += mean
     return x
-
-
-def evolution_to_gif(
-        evolution: torch.Tensor,
-        output_path: Union[str, Path],
-        normalization: Optional[transforms.Normalize] = None,
-) -> None:
-    if normalization is not None:
-        evolution = denormalize(evolution, normalization)
-    to_gif(evolution, output_path)

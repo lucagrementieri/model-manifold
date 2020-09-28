@@ -1,6 +1,7 @@
 import argparse
 import random
 import sys
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -11,7 +12,7 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from networks import small_cnn
+from mnist_networks import small_cnn
 
 
 def train_epoch(
@@ -86,19 +87,28 @@ def mnist_loader(batch_size: int, train: bool) -> DataLoader:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Train a basic model on MNIST',
-        usage='python3 train_mnist.py '
-              '[--batch-size BATCH-SIZE --epochs EPOCHS --lr LR --seed SEED]',
+        usage='python3 mnist_training.py [--batch-size BATCH-SIZE '
+              '--epochs EPOCHS --lr LR --seed SEED --output-dir OUTPUT-DIR]',
     )
     parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
-    parser.add_argument('--epochs', type=int, default=15, help='Number of epochs')
+    parser.add_argument('--epochs', type=int, default=5, help='Number of epochs')
     parser.add_argument('--lr', type=float, default=0.01, help='Learning rate')
-    parser.add_argument('--seed', type=int, default=1, help='Random seed')
+    parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.add_argument(
+        '--output-dir',
+        type=str,
+        default='checkpoint',
+        help='Model checkpoint output directory',
+    )
 
-    args = parser.parse_args(sys.argv[2:])
+    args = parser.parse_args(sys.argv[1:])
 
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+
+    output_dir = Path(args.output_dir).expanduser()
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     model = small_cnn()
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
@@ -109,4 +119,4 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         train_epoch(model, train_loader, optimizer, epoch + 1)
         test(model, test_loader)
-        torch.save(model.state_dict(), f'checkpoints/small_cnn_{epoch + 1:02d}.pt')
+        torch.save(model.state_dict(), output_dir / f'small_cnn_{epoch + 1:02d}.pt')
