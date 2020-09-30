@@ -67,11 +67,12 @@ def mnist_path(
 
     print(f'Compute path from {start_idx} to {end_idx}')
 
+    device = next(network.parameters()).device
     # noinspection PyTypeChecker
     data_path, prob_path, pred_path = path_tangent(
         network,
-        test_mnist[start_idx][0],
-        test_mnist[end_idx][0],
+        test_mnist[start_idx][0].to(device),
+        test_mnist[end_idx][0].to(device),
         steps=10000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
