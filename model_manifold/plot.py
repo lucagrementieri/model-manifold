@@ -35,11 +35,11 @@ def show_strip(
         images: torch.Tensor,
         probabilities: torch.Tensor,
         predictions: torch.Tensor,
-        steps: int = 8,
+        steps: int = 9,
 ) -> None:
     images = images.permute(0, 2, 3, 1).squeeze_(-1)
     image_indices = torch.linspace(0, images.shape[0] - 1, steps).tolist()
-    fig, axes = plt.subplots(1, steps, figsize=(10, 2))
+    fig, axes = plt.subplots(1, steps, figsize=(10, 1.8))
     for plot_idx, image_idx in enumerate(image_indices):
         iteration = round(image_idx)
         image = images[iteration].cpu()

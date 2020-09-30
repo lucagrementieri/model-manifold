@@ -113,8 +113,12 @@ def path(
     probabilities = [probability.item()]
     predictions = [prediction.item()]
     distance = torch.norm(end - x)
-    print(f'Iteration {len(points) - 1:05d} - Distance {distance:.04f}\r', end='')
-    while distance > threshold and len(points) < steps:
+    print(
+        f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
+        f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}\r',
+        end='',
+    )
+    while distance > threshold and len(points) < steps + 1:
         # noinspection PyTypeChecker
         j = jacobian(model, x.unsqueeze(0)).squeeze(0)
         with torch.no_grad():
@@ -130,7 +134,8 @@ def path(
             predictions.append(prediction.item())
             distance = torch.norm(end - x)
             print(
-                f'Iteration {len(points) - 1:05d} - Distance {distance:.04f}\r',
+                f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
+                f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}\r',
                 end='',
             )
     points = torch.stack(points, dim=0)

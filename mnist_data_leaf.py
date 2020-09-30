@@ -56,12 +56,14 @@ def mnist_path(
         while end_idx == start_idx:
             end_idx = random.randrange(len(test_mnist))
 
+    print(f'Compute path from {start_idx} to {end_idx}')
+
     # noinspection PyTypeChecker
     data_path, prob_path, pred_path = path_tangent(
         network,
         test_mnist[start_idx][0],
         test_mnist[end_idx][0],
-        steps=100,
+        steps=10000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
     data_path = denormalize(data_path, normalize)
@@ -81,7 +83,7 @@ if __name__ == '__main__':
         '--start', type=int, default=-1, help='Index of the starting image'
     )
     parser.add_argument('--end', type=int, default=-1, help='Index of ending image')
-    parser.add_argument('--seed', type=int, default=123, help='Random seed')
+    parser.add_argument('--seed', type=int, default=5, help='Random seed')
     parser.add_argument(
         '--output-dir', type=str, default='outputs', help='Output directory',
     )
