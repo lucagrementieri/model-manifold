@@ -31,12 +31,27 @@ def to_gif(
     imageio.mimsave(str(output_path), images[::step])
 
 
-def show_grid(images: torch.Tensor, rows: int, columns: int) -> None:
-    steps = rows * columns
-    plt.figure()
-    plt.axis('off')
-    for plot_idx, image_idx in enumerate(torch.linspace(0, images.shape[0], steps)):
-        plt.subplot(rows, columns, plot_idx)
-        image = images[round(image_idx)].cpu()
-        plt.imshow(image, vmin=0, vmax=1)
+def show_grid(
+        images: torch.Tensor,
+        probabilites: torch.Tensor,
+        predictions: torch.Tensor,
+        rows: int,
+        columns: int,
+) -> None:
+    images = images.permute(0, 2, 3, 1).squeeze_(-1)
+    image_indices = torch.linspace(0, images.shape[0] - 1, rows * columns).tolist()
+    fig, axes = plt.subplots(rows, columns, figsize=(6.4, 3.8))
+    for plot_idx, image_idx in enumerate(image_indices):
+        r, c = plot_idx // columns, plot_idx % columns
+        iteration = round(image_idx)
+        image = images[iteration].cpu()
+        axes[r, c].imshow(image, cmap='gray', vmin=0, vmax=1)
+        axes[r, c].set_title(
+            f'Iteration {iteration}:\n'
+            f'predicted label {predictions[iteration]} with\n'
+            f'probability {probabilites[iteration]:0.4f}',
+            fontsize=8,
+        )
+        axes[r, c].axis('off')
+    fig.tight_layout(pad=0.1)
     plt.show()

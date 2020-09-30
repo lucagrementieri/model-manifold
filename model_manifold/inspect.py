@@ -31,20 +31,31 @@ def constant_direction(
         step_size: float = 0.1,
         steps: int = 1000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     direction = torch.flatten(direction)
-    evolution = [start]
-    point = start
+    points = [start]
+    x = start
+    p = torch.exp(model(x.unsqueeze(0)))
+    probability, prediction = torch.max(p, dim=-1)
+    probabilities = [probability.item()]
+    predictions = [prediction.item()]
     for _ in trange(steps):
         # noinspection PyTypeChecker
-        j = jacobian(model, point.unsqueeze(0)).squeeze(0)
+        j = jacobian(model, x.unsqueeze(0)).squeeze(0)
         with torch.no_grad():
             j = F.normalize(j.reshape(j.shape[0], -1).T, dim=0)
             displacement = projection(j, direction)
             displacement = F.normalize(displacement, dim=-1).reshape(start.shape)
-            point = post_processing(point + step_size * displacement)
-            evolution.append(point.detach())
-    return torch.stack(evolution, dim=0)
+            x = post_processing(x + step_size * displacement)
+            points.append(x.detach())
+            p = torch.exp(model(x.unsqueeze(0)))
+            probability, prediction = torch.max(p, dim=-1)
+            probabilities.append(probability.item())
+            predictions.append(prediction.item())
+    points = torch.stack(points, dim=0)
+    probabilities = torch.tensor(probabilities, device=start.device)
+    predictions = torch.tensor(predictions, device=start.device)
+    return points, probabilities, predictions
 
 
 def constant_direction_kernel(
@@ -54,7 +65,7 @@ def constant_direction_kernel(
         step_size: float = 0.1,
         steps: int = 1000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return constant_direction(
         model,
         start,
@@ -73,7 +84,7 @@ def constant_direction_tangent(
         step_size: float = 0.1,
         steps: int = 1000,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return constant_direction(
         model,
         start,
@@ -94,27 +105,38 @@ def path(
         steps: int = 10000,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-) -> torch.Tensor:
-    evolution = [start]
-    point = start
-    distance = torch.norm(end - point)
-    print(f'Iteration {len(evolution) - 1:05d} - Distance {distance:.04f}\r', end='')
-    while distance > threshold and len(evolution) < steps:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    points = [start]
+    x = start
+    p = torch.exp(model(x.unsqueeze(0)))
+    probability, prediction = torch.max(p, dim=-1)
+    probabilities = [probability.item()]
+    predictions = [prediction.item()]
+    distance = torch.norm(end - x)
+    print(f'Iteration {len(points) - 1:05d} - Distance {distance:.04f}\r', end='')
+    while distance > threshold and len(points) < steps:
         # noinspection PyTypeChecker
-        j = jacobian(model, point.unsqueeze(0)).squeeze(0)
+        j = jacobian(model, x.unsqueeze(0)).squeeze(0)
         with torch.no_grad():
             j = F.normalize(j.reshape(j.shape[0], -1).T, dim=0)
-            direction = (end - point).flatten()
+            direction = (end - x).flatten()
             displacement = projection(j, direction)
             displacement = F.normalize(displacement, dim=-1).reshape(start.shape)
-            point = post_processing(point + step_size * displacement)
-            evolution.append(point.detach())
-            distance = torch.norm(end - point)
+            x = post_processing(x + step_size * displacement)
+            points.append(x.detach())
+            p = torch.exp(model(x.unsqueeze(0)))
+            probability, prediction = torch.max(p, dim=-1)
+            probabilities.append(probability.item())
+            predictions.append(prediction.item())
+            distance = torch.norm(end - x)
             print(
-                f'Iteration {len(evolution) - 1:05d} - Distance {distance:.04f}\r',
+                f'Iteration {len(points) - 1:05d} - Distance {distance:.04f}\r',
                 end='',
             )
-    return torch.stack(evolution, dim=0)
+    points = torch.stack(points, dim=0)
+    probabilities = torch.tensor(probabilities, device=start.device)
+    predictions = torch.tensor(predictions, device=start.device)
+    return points, probabilities, predictions
 
 
 def path_kernel(
@@ -125,7 +147,7 @@ def path_kernel(
         steps: int = 10000,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return path(
         model,
         start,
@@ -146,7 +168,7 @@ def path_tangent(
         steps: int = 10000,
         threshold: float = 1.0,
         post_processing: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     return path(
         model,
         start,
