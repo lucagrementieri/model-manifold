@@ -65,7 +65,7 @@ def mnist_path(
                 'the model is too confident on the selected end image.'
             )
 
-    print(f'Compute path from {start_idx} to {end_idx}')
+    print(f'Compute path from {start_idx} to {end_idx}.')
 
     device = next(network.parameters()).device
     # noinspection PyTypeChecker

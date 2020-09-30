@@ -30,7 +30,7 @@ def mnist_kernel_direction(
     if start_idx == -1:
         start_idx = random.randrange(len(test_mnist))
 
-    print(f'Evolve in the kernel of the local data matrix the image {start_idx}')
+    print(f'Evolve the image {start_idx} in the kernel of the local data matrix.')
 
     device = next(network.parameters()).device
     start_image = test_mnist[start_idx][0].to(device)
