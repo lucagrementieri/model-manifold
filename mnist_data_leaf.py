@@ -12,7 +12,7 @@ import torchvision.transforms as transforms
 
 import mnist_networks
 from model_manifold.inspect import path_tangent, domain_projection
-from model_manifold.plot import denormalize, to_gif, show_grid
+from model_manifold.plot import denormalize, to_gif, show_strip
 
 
 def mnist_path(
@@ -103,4 +103,4 @@ if __name__ == '__main__':
         step=100,
         scale_factor=10.0,
     )
-    show_grid(image_path, probability_path, prediction_path, 2, 5)
+    show_strip(image_path, probability_path, prediction_path)
