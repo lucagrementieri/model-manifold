@@ -3,7 +3,7 @@ import random
 import sys
 from functools import partial
 from pathlib import Path
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 import torch
@@ -12,15 +12,14 @@ import torchvision.transforms as transforms
 
 import mnist_networks
 from model_manifold.inspect import path_tangent, domain_projection
-from model_manifold.plot import denormalize, to_gif
+from model_manifold.plot import denormalize, to_gif, show_grid
 
 
-def export_mnist_path(
+def mnist_path(
         checkpoint_path: Union[str, Path],
-        output_dir: Union[str, Path],
         start_idx: int = -1,
         end_idx: int = -1,
-) -> torch.Tensor:
+) -> Tuple[torch.Tensor, int, int]:
     normalize = transforms.Normalize((0.1307,), (0.3081,))
     test_mnist = datasets.MNIST(
         'data',
@@ -69,15 +68,7 @@ def export_mnist_path(
     )
     data_path = denormalize(data_path, normalize)
 
-    output_dir = Path(output_dir).expanduser()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    to_gif(
-        data_path,
-        output_dir / f'{start_idx:05d}_{end_idx:05d}.gif',
-        step=100,
-        scale_factor=10.0,
-    )
-    return data_path
+    return data_path, start_idx, end_idx
 
 
 if __name__ == '__main__':
@@ -103,4 +94,13 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    export_mnist_path(args.checkpoint, args.output_dir, args.start, args.end)
+    image_path, start, end = mnist_path(args.checkpoint, args.output_dir, args.start, args.end)
+    output_dir = Path(args.output_dir).expanduser()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    to_gif(
+        image_path,
+        output_dir / f'{start:05d}_{end:05d}.gif',
+        step=100,
+        scale_factor=10.0,
+    )
+    show_grid(image_path, 2, 5)
