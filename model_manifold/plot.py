@@ -33,7 +33,7 @@ def to_gif(
 
 def show_strip(
         images: torch.Tensor,
-        probabilites: torch.Tensor,
+        probabilities: torch.Tensor,
         predictions: torch.Tensor,
         steps: int = 8
 ) -> None:
@@ -47,7 +47,7 @@ def show_strip(
         axes[plot_idx].set_title(
             f'Iteration {iteration}:\n'
             f'predicted label {predictions[iteration]} with\n'
-            f'probability {probabilites[iteration]:0.4f}',
+            f'probability {probabilities[iteration]:0.4f}',
             fontsize=7,
         )
         axes[plot_idx].axis('off')
