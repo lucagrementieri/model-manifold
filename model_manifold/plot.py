@@ -35,7 +35,7 @@ def show_strip(
         images: torch.Tensor,
         probabilities: torch.Tensor,
         predictions: torch.Tensor,
-        steps: int = 8
+        steps: int = 8,
 ) -> None:
     images = images.permute(0, 2, 3, 1).squeeze_(-1)
     image_indices = torch.linspace(0, images.shape[0] - 1, steps).tolist()
