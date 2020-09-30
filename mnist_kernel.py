@@ -52,8 +52,8 @@ def mnist_kernel_direction(
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Export the path obtained evolving a valid image along a '
-                    'random direction in the kernel of the local data matrix.',
-        usage='python3 mnist_data_leaf.py CHECKPOINT '
+                    'random direction in the kernel of the local data matrix as a .gif',
+        usage='python3 mnist_kernel.py CHECKPOINT '
               '[--start START --seed SEED --output-dir OUTPUT-DIR]',
     )
     parser.add_argument('checkpoint', type=str, help='Path to checkpoint model')
