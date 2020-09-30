@@ -7,12 +7,26 @@ from typing import Union, Tuple
 
 import numpy as np
 import torch
+import torch.nn as nn
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from torch.utils.data import Dataset
 
 import mnist_networks
 from model_manifold.inspect import path_tangent, domain_projection
 from model_manifold.plot import denormalize, to_gif, show_strip
+
+
+def random_idx(model: nn.Module, loader: Dataset, excluded: int):
+    idx = random.randrange(len(loader))
+    image = loader[idx][0]
+    p = torch.exp(model(image.unsqueeze(0)))
+    # noinspection PyTypeChecker
+    while torch.any(p > 0.99) or idx == excluded:
+        idx = random.randrange(len(loader))
+        image = loader[idx][0]
+        p = torch.exp(model(image.unsqueeze(0)))
+    return idx
 
 
 def mnist_path(
@@ -28,14 +42,7 @@ def mnist_path(
     network = mnist_networks.small_cnn(checkpoint_path)
 
     if start_idx == -1:
-        start_idx = random.randrange(len(test_mnist))
-        start_image = test_mnist[start_idx][0]
-        p = torch.exp(network(start_image.unsqueeze(0)))
-        # noinspection PyTypeChecker
-        while torch.any(p > 0.99) or start_idx == end_idx:
-            start_idx = random.randrange(len(test_mnist))
-            start_image = test_mnist[start_idx][0]
-            p = torch.exp(network(start_image.unsqueeze(0)))
+        start_idx = random_idx(network, test_mnist, end_idx)
     else:
         start_image = test_mnist[start_idx][0]
         p = torch.exp(network(start_image.unsqueeze(0)))
@@ -46,15 +53,17 @@ def mnist_path(
                 'the model is too confident on the selected start image.'
             )
 
-    print(
-        f'The predicted label for the start image is '
-        f'{p.argmax().item()} with probability {p.max().item():0.4f}.'
-    )
-
     if end_idx == -1:
-        end_idx = random.randrange(len(test_mnist))
-        while end_idx == start_idx:
-            end_idx = random.randrange(len(test_mnist))
+        end_idx = random_idx(network, test_mnist, start_idx)
+    else:
+        end_image = test_mnist[end_idx][0]
+        p = torch.exp(network(end_image.unsqueeze(0)))
+        # noinspection PyTypeChecker
+        if torch.any(p > 0.99):
+            print(
+                'Warning: the manifold path could be hard to find because '
+                'the model is too confident on the selected end image.'
+            )
 
     print(f'Compute path from {start_idx} to {end_idx}')
 
