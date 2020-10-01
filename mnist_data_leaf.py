@@ -57,6 +57,8 @@ def mnist_path(
     if end_idx == -1:
         end_idx = random_idx(network, test_mnist, start_idx)
     end_image = test_mnist[end_idx][0]
+    if flip:
+        end_image = torch.flip(end_image, dims=(-1,))
     p = torch.exp(network(end_image.unsqueeze(0)))
     # noinspection PyTypeChecker
     if torch.any(p > 0.99):
