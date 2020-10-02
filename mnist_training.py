@@ -91,7 +91,7 @@ if __name__ == '__main__':
               '--epochs EPOCHS --lr LR --seed SEED --output-dir OUTPUT-DIR]',
     )
     parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
-    parser.add_argument('--epochs', type=int, default=5, help='Number of epochs')
+    parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
     parser.add_argument('--lr', type=float, default=0.01, help='Learning rate')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     parser.add_argument(
