@@ -30,7 +30,7 @@ python3 mnist_training.py
 ```
 
 The command above trains the small CNN defined in `mnist_networks.py` for a single epoch
-to prevent convergence and at the end of every epoch it saves a checkpoint in the
+to prevent convergence; at the end, it saves a checkpoint in the
 `checkpoint` directory.
 
 Many configuration parameters can be modified using the script CLI.
@@ -38,6 +38,8 @@ To inspect those parameters it is sufficient to display the help page with
 ```
 python3 mnist_training.py --help
 ```
+
+Note: If multiple epochs are set, a checkpoint is saved at the end of each of them.
 
 ## Visualizing paths on the foliation
 
@@ -48,7 +50,7 @@ All those scripts take a model checkpoint as input and they compute
 paths in the data domain according to the foliation induced by the model.
 
 The scripts have two effects:
-- they export a `.gif animation of the evolution in the `outputs` directory;`
+- they export a `.gif` animation of the evolution in the `outputs` directory;
 - they display an image reporting intermediate steps of the evolution.
 
 The scripts have these optional parameters:
@@ -57,7 +59,7 @@ The scripts have these optional parameters:
 - `--seed`: random seed to control the sampling of source and destination image;
 - `--output-dir`: output directory of the .gif.
 
-If `--start` (or `--end`) is not specified it is chosen at random.
+If `--start` (or `--end`) is not specified, it is chosen at random.
 
 ### Moving across leaves in the foliation
 
