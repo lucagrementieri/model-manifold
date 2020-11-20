@@ -28,8 +28,8 @@ def to_gif(
     images = F.interpolate(images, scale_factor=scale_factor)
     images = images.permute(0, 2, 3, 1).squeeze_(-1)
     images = torch.round(images * 255).to(torch.uint8)
-    images = images.numpy()
     images = torch.unbind(images)
+    images = [im.numpy() for im in images]
     imageio.mimsave(str(output_path), images)
 
 

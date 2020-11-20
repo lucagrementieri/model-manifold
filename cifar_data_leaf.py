@@ -81,7 +81,7 @@ def cifar_path(
         start_image,
         end_image,
         step_size=step_size,
-        steps=100000,
+        steps=150000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
     data_path = denormalize(data_path, normalize)
