@@ -115,8 +115,7 @@ def path(
     distance = torch.norm(end - x)
     print(
         f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
-        f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}\r',
-        end='',
+        f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}'
     )
     while distance > threshold and len(points) < steps + 1:
         # noinspection PyTypeChecker
@@ -135,8 +134,7 @@ def path(
             distance = torch.norm(end - x)
             print(
                 f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
-                f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}\r',
-                end='',
+                f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}'
             )
     points = torch.stack(points, dim=0)
     probabilities = torch.tensor(probabilities, device=start.device)
@@ -191,6 +189,10 @@ def domain_projection(
         normalization: transforms.Normalize,
         domain: Tuple[float, float] = (0.0, 1.0),
 ) -> torch.Tensor:
-    inf = torch.tensor(domain[0]).reshape(1, 1, 1)
-    sup = torch.tensor(domain[1]).reshape(1, 1, 1)
-    return torch.clamp(x, normalization(inf).item(), normalization(sup).item())
+    inf = torch.tensor(domain[0]).repeat(x.shape[0], 1, 1)
+    sup = torch.tensor(domain[1]).repeat(x.shape[0], 1, 1)
+    normalized_inf = normalization(inf).reshape(x.shape[0])
+    normalized_sup = normalization(sup).reshape(x.shape[0])
+    for i in range(x.shape[0]):
+        x[i] = torch.clamp(x[i], normalized_inf[i], normalized_sup[i])
+    return x
