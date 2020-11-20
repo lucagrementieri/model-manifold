@@ -19,7 +19,6 @@ from model_manifold.plot import denormalize, to_gif, show_cifar_strip
 
 def random_idx(model: nn.Module, loader: Dataset, excluded: int):
     idx = random.randrange(len(loader))
-    """
     device = next(model.parameters()).device
     image = loader[idx][0].to(device)
     p = torch.exp(model(image.unsqueeze(0)))
@@ -28,7 +27,6 @@ def random_idx(model: nn.Module, loader: Dataset, excluded: int):
         idx = random.randrange(len(loader))
         image = loader[idx][0].to(device)
         p = torch.exp(model(image.unsqueeze(0)))
-    """
     return idx
 
 
@@ -43,7 +41,7 @@ def cifar_path(
         transform=transforms.Compose([transforms.ToTensor(), normalize]),
     )
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    network = cifar_vgg.VGG('VGG16')
+    network = cifar_vgg.VGG('VGG11')
     network = network.to(device)
     network.load_state_dict(torch.load(checkpoint_path, map_location=device)['net'])
 

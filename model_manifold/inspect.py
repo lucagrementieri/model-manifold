@@ -132,10 +132,11 @@ def path(
             probabilities.append(probability.item())
             predictions.append(prediction.item())
             distance = torch.norm(end - x)
-            print(
-                f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
-                f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}'
-            )
+            if len(points) % 100 == 0:
+                print(
+                    f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
+                    f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}'
+                )
     points = torch.stack(points, dim=0)
     probabilities = torch.tensor(probabilities, device=start.device)
     predictions = torch.tensor(predictions, device=start.device)
