@@ -102,8 +102,8 @@ if __name__ == '__main__':
         usage='python3 mnist_training.py [--batch-size BATCH-SIZE '
               '--epochs EPOCHS --lr LR --seed SEED --output-dir OUTPUT-DIR]',
     )
-    parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
-    parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
+    parser.add_argument('--batch-size', type=int, default=60, help='Batch size')
+    parser.add_argument('--epochs', type=int, default=15, help='Number of epochs')
     parser.add_argument('--lr', type=float, default=0.1, help='Learning rate')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     parser.add_argument(

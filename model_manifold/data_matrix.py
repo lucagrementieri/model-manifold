@@ -28,7 +28,7 @@ def local_data_matrix_rank_and_trace(model: nn.Module, x: torch.Tensor) -> Tuple
     # noinspection PyTypeChecker
     j = jacobian(model, x.unsqueeze(0)).squeeze(0)
     j = j.reshape(j.size(0), -1)
-    rank = torch.matrix_rank(j)
+    rank = torch.clamp(torch.matrix_rank(j), max=j.size(0)-1)
     with torch.no_grad():
         p = torch.exp(model(x.unsqueeze(0)))
         trace = torch.sum(p * torch.pow(j, 2).sum(dim=1))
