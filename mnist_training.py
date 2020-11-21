@@ -2,32 +2,38 @@ import argparse
 import random
 import sys
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
+from torch.optim.lr_scheduler import StepLR
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from mnist_networks import small_cnn
+from model_manifold.data_matrix import batch_data_matrix_rank_and_trace
+from model_manifold.plot import plot_ranks, plot_traces
 
 
 def train_epoch(
         model: nn.Module, loader: DataLoader, optimizer: Optimizer, epoch: int
-) -> None:
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     log_interval = len(loader) // 10
     device = next(model.parameters()).device
     model.train()
-    for batch_idx, (data, target) in enumerate(loader):
+    steps = []
+    ranks = []
+    traces = []
+    for batch_idx, (data, target) in enumerate(loader, start=1):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
         loss.backward()
-        optimizer.step()
         if batch_idx % log_interval == 0:
             print(
                 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -38,6 +44,15 @@ def train_epoch(
                     loss.item(),
                 )
             )
+            steps.append(batch_idx)
+            batch_ranks, batch_traces = batch_data_matrix_rank_and_trace(model, data)
+            ranks.append(batch_ranks)
+            traces.append(batch_traces)
+        optimizer.step()
+    steps = torch.tensor(steps)
+    ranks = torch.stack(ranks, dim=1)
+    traces = torch.stack(traces, dim=1)
+    return steps, ranks, traces
 
 
 def test(model: nn.Module, loader: DataLoader) -> float:
@@ -57,10 +72,7 @@ def test(model: nn.Module, loader: DataLoader) -> float:
 
     print(
         '\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            test_loss,
-            correct,
-            len(loader.dataset),
-            100.0 * correct / len(loader.dataset),
+            test_loss, correct, len(loader.dataset), 100.0 * correct / len(loader.dataset),
         )
     )
     return test_loss
@@ -92,13 +104,10 @@ if __name__ == '__main__':
     )
     parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
     parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
-    parser.add_argument('--lr', type=float, default=0.01, help='Learning rate')
+    parser.add_argument('--lr', type=float, default=0.1, help='Learning rate')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     parser.add_argument(
-        '--output-dir',
-        type=str,
-        default='checkpoint',
-        help='Model checkpoint output directory',
+        '--output-dir', type=str, default='checkpoint', help='Model checkpoint output directory',
     )
 
     args = parser.parse_args(sys.argv[1:])
@@ -116,7 +125,23 @@ if __name__ == '__main__':
     train_loader = mnist_loader(args.batch_size, train=True)
     test_loader = mnist_loader(args.batch_size, train=False)
 
+    global_steps = []
+    global_ranks = []
+    global_traces = []
+    scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
     for epoch in range(args.epochs):
-        train_epoch(model, train_loader, optimizer, epoch + 1)
+        epoch_steps, epoch_ranks, epoch_traces = train_epoch(
+            model, train_loader, optimizer, epoch + 1
+        )
+        global_steps.append(epoch_steps + epoch * len(train_loader))
+        global_ranks.append(epoch_ranks)
+        global_traces.append(epoch_traces)
         test(model, test_loader)
         torch.save(model.state_dict(), output_dir / f'small_cnn_{epoch + 1:02d}.pt')
+        scheduler.step()
+
+    global_steps = torch.cat(global_steps, dim=0)
+    global_ranks = torch.cat(global_ranks, dim=1)
+    global_traces = torch.cat(global_traces, dim=1)
+    plot_ranks(global_steps.cpu().numpy(), global_ranks.cpu().numpy())
+    plot_traces(global_steps.cpu().numpy(), global_traces.cpu().numpy())

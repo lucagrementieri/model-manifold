@@ -3,6 +3,7 @@ from typing import Union
 
 import imageio
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
@@ -17,9 +18,7 @@ def denormalize(x: torch.Tensor, normalization: transforms.Normalize) -> torch.T
 
 
 def to_gif(
-        images: torch.Tensor,
-        output_path: Union[str, Path],
-        step: int = 1,
+        images: torch.Tensor, output_path: Union[str, Path], step: int = 1,
         scale_factor: float = 1.0,
 ) -> None:
     # noinspection PyArgumentList
@@ -32,9 +31,7 @@ def to_gif(
 
 
 def show_strip(
-        images: torch.Tensor,
-        probabilities: torch.Tensor,
-        predictions: torch.Tensor,
+        images: torch.Tensor, probabilities: torch.Tensor, predictions: torch.Tensor,
         steps: int = 9,
 ) -> None:
     images = images.permute(0, 2, 3, 1).squeeze_(-1)
@@ -52,4 +49,26 @@ def show_strip(
         )
         axes[plot_idx].axis('off')
     fig.tight_layout(pad=0.1)
+    plt.show()
+
+
+def plot_ranks(steps: np.ndarray, ranks: np.ndarray) -> None:
+    median = np.median(ranks, axis=0)
+    upper_quantile_diff = np.max(ranks, axis=0) - median
+    lower_quantile_diff = np.min(ranks, axis=0) - median
+    errors = np.vstack([lower_quantile_diff, upper_quantile_diff])
+    with plt.style.context('seaborn'):
+        plt.errorbar(steps, median, yerr=errors)
+        plt.yticks(range(np.max(ranks)+2))
+        plt.xlabel('Steps')
+        plt.ylabel(r'Median of $\rank\ G(x, w)$')
+    plt.show()
+
+
+def plot_traces(steps: np.ndarray, traces: np.ndarray) -> None:
+    mean = np.mean(traces, axis=0)
+    with plt.style.context('seaborn'):
+        plt.plot(steps, mean)
+        plt.xlabel('Steps')
+        plt.ylabel(r'Mean trace of $G(x, w)$')
     plt.show()

@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 from torch.autograd.functional import jacobian
@@ -19,21 +21,24 @@ def local_data_matrix(model: nn.Module, x: torch.Tensor) -> torch.Tensor:
     return g_matrix
 
 
-def local_data_matrix_trace(model: nn.Module, x: torch.Tensor) -> float:
+def local_data_matrix_rank_and_trace(model: nn.Module, x: torch.Tensor) -> Tuple[float, float]:
     training_state = model.training
     if training_state:
         model.eval()
     # noinspection PyTypeChecker
     j = jacobian(model, x.unsqueeze(0)).squeeze(0)
     j = j.reshape(j.size(0), -1)
+    rank = torch.matrix_rank(j)
     with torch.no_grad():
         p = torch.exp(model(x.unsqueeze(0)))
         trace = torch.sum(p * torch.pow(j, 2).sum(dim=1))
     if training_state:
         model.train()
-    return trace.item()
+    return rank.item(), trace.item()
 
 
-def batch_data_matrix_trace(model: nn.Module, batch: torch.Tensor) -> float:
-    traces = [local_data_matrix_trace(model, x) for x in batch]
-    return torch.tensor(traces).mean().item()
+def batch_data_matrix_rank_and_trace(
+        model: nn.Module, batch: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    ranks, traces = zip(*[local_data_matrix_rank_and_trace(model, x) for x in batch])
+    return torch.tensor(ranks), torch.tensor(traces)
