@@ -131,4 +131,3 @@ if __name__ == '__main__':
         step=200,
         scale_factor=8.0,
     )
-    show_cifar_strip(image_path, probability_path, prediction_path)

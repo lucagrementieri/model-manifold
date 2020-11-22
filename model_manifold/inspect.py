@@ -115,7 +115,8 @@ def path(
     distance = torch.norm(end - x)
     print(
         f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
-        f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}'
+        f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}\r',
+        end='',
     )
     while distance > threshold and len(points) < steps + 1:
         # noinspection PyTypeChecker
@@ -132,11 +133,11 @@ def path(
             probabilities.append(probability.item())
             predictions.append(prediction.item())
             distance = torch.norm(end - x)
-            if len(points) % 100 == 0:
-                print(
-                    f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
-                    f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}'
-                )
+            print(
+                f'Iteration {len(points) - 1:05d} - Distance {distance:.04f} - '
+                f'Predicted {predictions[-1]} with probability {probabilities[-1]:0.4f}\r',
+                end='',
+            )
     points = torch.stack(points, dim=0)
     probabilities = torch.tensor(probabilities, device=start.device)
     predictions = torch.tensor(predictions, device=start.device)
@@ -186,8 +187,7 @@ def path_tangent(
 
 
 def domain_projection(
-        x: torch.Tensor,
-        normalization: transforms.Normalize,
+        x: torch.Tensor, normalization: transforms.Normalize,
         domain: Tuple[float, float] = (0.0, 1.0),
 ) -> torch.Tensor:
     inf = torch.tensor(domain[0]).repeat(x.shape[0], 1, 1)

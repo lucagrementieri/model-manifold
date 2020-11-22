@@ -17,9 +17,7 @@ def denormalize(x: torch.Tensor, normalization: transforms.Normalize) -> torch.T
 
 
 def to_gif(
-        images: torch.Tensor,
-        output_path: Union[str, Path],
-        step: int = 1,
+        images: torch.Tensor, output_path: Union[str, Path], step: int = 1,
         scale_factor: float = 1.0,
 ) -> None:
     # noinspection PyArgumentList
@@ -34,9 +32,7 @@ def to_gif(
 
 
 def show_strip(
-        images: torch.Tensor,
-        probabilities: torch.Tensor,
-        predictions: torch.Tensor,
+        images: torch.Tensor, probabilities: torch.Tensor, predictions: torch.Tensor,
         steps: int = 9,
 ) -> None:
     images = images.permute(0, 2, 3, 1).squeeze_(-1)
@@ -46,30 +42,6 @@ def show_strip(
         iteration = round(image_idx)
         image = images[iteration].cpu()
         axes[plot_idx].imshow(image, cmap='gray', vmin=0, vmax=1)
-        axes[plot_idx].set_title(
-            f'Iteration {iteration}:\n'
-            f'predicted label {predictions[iteration]} with\n'
-            f'probability {probabilities[iteration]:0.4f}',
-            fontsize=7,
-        )
-        axes[plot_idx].axis('off')
-    fig.tight_layout(pad=0.1)
-    plt.show()
-
-
-def show_cifar_strip(
-        images: torch.Tensor,
-        probabilities: torch.Tensor,
-        predictions: torch.Tensor,
-        steps: int = 9,
-) -> None:
-    images = images.permute(0, 2, 3, 1)
-    image_indices = torch.linspace(0, images.shape[0] - 1, steps).tolist()
-    fig, axes = plt.subplots(1, steps, figsize=(10, 1.8))
-    for plot_idx, image_idx in enumerate(image_indices):
-        iteration = round(image_idx)
-        image = images[iteration].cpu()
-        axes[plot_idx].imshow(image, vmin=0, vmax=1)
         axes[plot_idx].set_title(
             f'Iteration {iteration}:\n'
             f'predicted label {predictions[iteration]} with\n'
