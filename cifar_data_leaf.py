@@ -14,7 +14,7 @@ from torch.utils.data import Dataset
 
 import cifar_vgg
 from model_manifold.inspect import path_tangent, domain_projection
-from model_manifold.plot import denormalize, to_gif, show_cifar_strip
+from model_manifold.plot import denormalize, to_gif
 
 
 def random_idx(model: nn.Module, loader: Dataset, excluded: int):
