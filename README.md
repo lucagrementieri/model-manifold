@@ -7,7 +7,7 @@ This repository contains the code used to perform the experiments of the paper
 
 The repository contains:
 - a `checkpoint` directory containing a checkpoint of a small CNN partially trained
-on MNIST;
+on MNIST and a checkpoint of a VGG11-like network partially trained on CIFAR-10;
 - the package `model_manifold` that includes functions to move along a leaf
 of the foliation as well as to move across different leaves;
 - many scripts needed to perform every single experiment on MNIST reported in the paper.
