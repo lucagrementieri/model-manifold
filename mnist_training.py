@@ -12,11 +12,11 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from mnist_networks import small_cnn
+from mnist_networks import small_cnn, medium_cnn
 
 
 def train_epoch(
-        model: nn.Module, loader: DataLoader, optimizer: Optimizer, epoch: int
+    model: nn.Module, loader: DataLoader, optimizer: Optimizer, epoch: int
 ) -> None:
     log_interval = len(loader) // 10
     device = next(model.parameters()).device
@@ -30,7 +30,7 @@ def train_epoch(
         optimizer.step()
         if batch_idx % log_interval == 0:
             print(
-                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
@@ -49,14 +49,14 @@ def test(model: nn.Module, loader: DataLoader) -> float:
         for data, target in loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()
+            test_loss += F.nll_loss(output, target, reduction="sum").item()
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(loader.dataset)
 
     print(
-        '\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
             test_loss,
             correct,
             len(loader.dataset),
@@ -69,7 +69,7 @@ def test(model: nn.Module, loader: DataLoader) -> float:
 def mnist_loader(batch_size: int, train: bool) -> DataLoader:
     loader = torch.utils.data.DataLoader(
         datasets.MNIST(
-            'data',
+            "data",
             train=train,
             download=True,
             transform=transforms.Compose(
@@ -84,21 +84,21 @@ def mnist_loader(batch_size: int, train: bool) -> DataLoader:
     return loader
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Train a basic model on MNIST',
-        usage='python3 mnist_training.py [--batch-size BATCH-SIZE '
-              '--epochs EPOCHS --lr LR --seed SEED --output-dir OUTPUT-DIR]',
+        description="Train a basic model on MNIST",
+        usage="python3 mnist_training.py [--batch-size BATCH-SIZE "
+        "--epochs EPOCHS --lr LR --seed SEED --output-dir OUTPUT-DIR]",
     )
-    parser.add_argument('--batch-size', type=int, default=64, help='Batch size')
-    parser.add_argument('--epochs', type=int, default=1, help='Number of epochs')
-    parser.add_argument('--lr', type=float, default=0.01, help='Learning rate')
-    parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.add_argument("--batch-size", type=int, default=64, help="Batch size")
+    parser.add_argument("--epochs", type=int, default=1, help="Number of epochs")
+    parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument(
-        '--output-dir',
+        "--output-dir",
         type=str,
-        default='checkpoint',
-        help='Model checkpoint output directory',
+        default="checkpoint",
+        help="Model checkpoint output directory",
     )
 
     args = parser.parse_args(sys.argv[1:])
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     output_dir = Path(args.output_dir).expanduser()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    model = small_cnn()
+    model = medium_cnn()
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
 
     train_loader = mnist_loader(args.batch_size, train=True)
@@ -119,4 +119,4 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         train_epoch(model, train_loader, optimizer, epoch + 1)
         test(model, test_loader)
-        torch.save(model.state_dict(), output_dir / f'small_cnn_{epoch + 1:02d}.pt')
+        torch.save(model.state_dict(), output_dir / f"medium_cnn_{epoch + 1:02d}.pt")

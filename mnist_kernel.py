@@ -25,7 +25,7 @@ def mnist_kernel_direction(
         download=True,
         transform=transforms.Compose([transforms.ToTensor(), normalize]),
     )
-    network = mnist_networks.small_cnn(checkpoint_path)
+    network = mnist_networks.medium_cnn(checkpoint_path)
 
     if start_idx == -1:
         start_idx = random.randrange(len(test_mnist))

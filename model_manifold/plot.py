@@ -17,8 +17,10 @@ def denormalize(x: torch.Tensor, normalization: transforms.Normalize) -> torch.T
 
 
 def to_gif(
-        images: torch.Tensor, output_path: Union[str, Path], step: int = 1,
-        scale_factor: float = 1.0,
+    images: torch.Tensor,
+    output_path: Union[str, Path],
+    step: int = 1,
+    scale_factor: float = 1.0,
 ) -> None:
     # noinspection PyArgumentList
     images = images[::step]
@@ -31,9 +33,12 @@ def to_gif(
     imageio.mimsave(str(output_path), images)
 
 
-def show_strip(
-        images: torch.Tensor, probabilities: torch.Tensor, predictions: torch.Tensor,
-        steps: int = 9,
+def save_strip(
+    images: torch.Tensor,
+    output_path: Union[str, Path],
+    probabilities: torch.Tensor,
+    predictions: torch.Tensor,
+    steps: int = 9,
 ) -> None:
     images = images.permute(0, 2, 3, 1).squeeze_(-1)
     image_indices = torch.linspace(0, images.shape[0] - 1, steps).tolist()
@@ -41,13 +46,13 @@ def show_strip(
     for plot_idx, image_idx in enumerate(image_indices):
         iteration = round(image_idx)
         image = images[iteration].cpu()
-        axes[plot_idx].imshow(image, cmap='gray', vmin=0, vmax=1)
+        axes[plot_idx].imshow(image, cmap="gray", vmin=0, vmax=1)
         axes[plot_idx].set_title(
-            f'Iteration {iteration}:\n'
-            f'predicted label {predictions[iteration]} with\n'
-            f'probability {probabilities[iteration]:0.4f}',
+            f"Iteration {iteration}:\n"
+            f"predicted label {predictions[iteration]} with\n"
+            f"probability {probabilities[iteration]:0.4f}",
             fontsize=7,
         )
-        axes[plot_idx].axis('off')
-    fig.tight_layout(pad=0.1)
-    plt.show()
+        axes[plot_idx].axis("off")
+    fig.tight_layout()
+    plt.savefig(str(output_path))
