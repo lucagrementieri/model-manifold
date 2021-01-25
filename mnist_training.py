@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
-from torch.optim.lr_scheduler import StepLR
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -130,7 +129,6 @@ if __name__ == "__main__":
 
     global_steps = []
     global_traces = []
-    # scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
     for epoch in range(args.epochs):
         epoch_steps, epoch_traces = train_epoch(
             model, train_loader, optimizer, epoch + 1
@@ -142,7 +140,6 @@ if __name__ == "__main__":
             model.state_dict(),
             output_dir / f"medium_cnn_{epoch + 1:02d}.pt",
         )
-        #  scheduler.step()
 
     global_steps = torch.cat(global_steps, dim=0)
     global_traces = torch.cat(global_traces, dim=1)
