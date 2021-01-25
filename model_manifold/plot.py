@@ -61,8 +61,10 @@ def save_strip(
 
 
 def save_traces(
-    steps: np.ndarray, traces: np.ndarray, output_path: Union[str, Path]
+    steps: torch.Tensor, traces: torch.Tensor, output_path: Union[str, Path]
 ) -> None:
+    steps = steps.cpu().numpy()
+    traces = traces.cpu().numpy()
     mean = np.mean(traces, axis=0)
     exponential_average = pd.Series(mean).ewm(alpha=0.05).mean().to_numpy()
     with plt.style.context("seaborn"):

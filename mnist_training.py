@@ -15,8 +15,8 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from mnist_networks import medium_cnn
-from model_manifold.data_matrix import batch_data_matrix_rank_and_trace
-from model_manifold.plot import plot_ranks, plot_traces
+from model_manifold.data_matrix import batch_data_matrix_trace
+from model_manifold.plot import save_traces
 
 
 def train_epoch(
@@ -26,7 +26,6 @@ def train_epoch(
     device = next(model.parameters()).device
     model.train()
     steps = []
-    ranks = []
     traces = []
     for batch_idx, (data, target) in enumerate(loader, start=1):
         data, target = data.to(device), target.to(device)
@@ -45,14 +44,12 @@ def train_epoch(
                 )
             )
             steps.append(batch_idx)
-            batch_ranks, batch_traces = batch_data_matrix_rank_and_trace(model, data)
-            ranks.append(batch_ranks)
+            batch_traces = batch_data_matrix_trace(model, data)
             traces.append(batch_traces)
         optimizer.step()
     steps = torch.tensor(steps)
-    ranks = torch.stack(ranks, dim=1)
     traces = torch.stack(traces, dim=1)
-    return steps, ranks, traces
+    return steps, traces
 
 
 def test(model: nn.Module, loader: DataLoader) -> float:
@@ -132,25 +129,25 @@ if __name__ == "__main__":
     test_loader = mnist_loader(args.batch_size, train=False)
 
     global_steps = []
-    global_ranks = []
     global_traces = []
-    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+    # scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
     for epoch in range(args.epochs):
-        epoch_steps, epoch_ranks, epoch_traces = train_epoch(
+        epoch_steps, epoch_traces = train_epoch(
             model, train_loader, optimizer, epoch + 1
         )
         global_steps.append(epoch_steps + epoch * len(train_loader))
-        global_ranks.append(epoch_ranks)
         global_traces.append(epoch_traces)
         test(model, test_loader)
         torch.save(
             model.state_dict(),
             output_dir / f"medium_cnn_{epoch + 1:02d}.pt",
         )
-        scheduler.step()
+        #  scheduler.step()
 
     global_steps = torch.cat(global_steps, dim=0)
-    global_ranks = torch.cat(global_ranks, dim=1)
     global_traces = torch.cat(global_traces, dim=1)
-    plot_ranks(global_steps.cpu().numpy(), global_ranks.cpu().numpy())
-    plot_traces(global_steps.cpu().numpy(), global_traces.cpu().numpy())
+    save_traces(
+        global_steps,
+        global_traces,
+        output_dir / f"traces_medium_cnn_{epoch + 1:02d}.png",
+    )
