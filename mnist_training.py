@@ -21,7 +21,7 @@ from model_manifold.plot import save_traces
 
 def train_epoch(
     model: nn.Module, loader: DataLoader, optimizer: Optimizer, epoch: int
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> Tuple[torch.Tensor, torch.Tensor]:
     log_interval = len(loader) // 10
     device = next(model.parameters()).device
     model.train()
