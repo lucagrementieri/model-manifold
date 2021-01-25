@@ -39,26 +39,9 @@ def mnist_noise_path(
     if start_idx == -1:
         start_idx = random.randrange(len(test_mnist))
     start_image = test_mnist[start_idx][0].to(device)
-
-    p = torch.exp(network(start_image.unsqueeze(0)))
-    # noinspection PyTypeChecker
-    if torch.any(p > 0.99):
-        print(
-            "Warning: the manifold path could be hard to find because "
-            "the model is too confident on the selected start image."
-        )
-
     if end_idx == -1:
         end_idx = random.randrange(len(test_mnist))
     end_image = test_mnist[end_idx][0].to(device)
-
-    p = torch.exp(network(end_image.unsqueeze(0)))
-    # noinspection PyTypeChecker
-    if torch.any(p > 0.99):
-        print(
-            "Warning: the manifold path could be hard to find because "
-            "the model is too confident on the selected end image."
-        )
 
     print(f"Compute path from a noisy {start_idx} to {end_idx}.")
     v = torch.randn_like(start_image)
@@ -77,7 +60,7 @@ def mnist_noise_path(
     data_path, prob_path, pred_path = path_tangent(
         network,
         noisy_start.to(device),
-        test_mnist[end_idx][0].to(device),
+        end_image,
         steps=10000,
         post_processing=partial(domain_projection, normalization=normalize),
     )

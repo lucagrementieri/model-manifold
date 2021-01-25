@@ -36,26 +36,12 @@ def mnist_path(
     start_image = test_mnist[start_idx][0].to(device)
     if flip:
         start_image = torch.flip(start_image, dims=(-1,))
-    p = torch.exp(network(start_image.unsqueeze(0)))
-    # noinspection PyTypeChecker
-    if torch.any(p > 0.99):
-        print(
-            "Warning: the manifold path could be hard to find because "
-            "the model is too confident on the selected start image."
-        )
 
     if end_idx == -1:
         end_idx = random.randrange(len(test_mnist))
     end_image = test_mnist[end_idx][0].to(device)
     if flip:
         end_image = torch.flip(end_image, dims=(-1,))
-    p = torch.exp(network(end_image.unsqueeze(0)))
-    # noinspection PyTypeChecker
-    if torch.any(p > 0.99):
-        print(
-            "Warning: the manifold path could be hard to find because "
-            "the model is too confident on the selected end image."
-        )
 
     print(f"Compute path from {start_idx} to {end_idx}.")
 
@@ -63,8 +49,8 @@ def mnist_path(
     # noinspection PyTypeChecker
     data_path, prob_path, pred_path = path_tangent(
         network,
-        start_image.to(device),
-        end_image.to(device),
+        start_image,
+        end_image,
         steps=10000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
