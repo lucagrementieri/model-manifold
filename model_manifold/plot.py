@@ -3,9 +3,12 @@ from typing import Union
 
 import imageio
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
+import seaborn as sns
 
 
 def denormalize(x: torch.Tensor, normalization: transforms.Normalize) -> torch.Tensor:
@@ -56,3 +59,43 @@ def save_strip(
         axes[plot_idx].axis("off")
     fig.tight_layout()
     plt.savefig(str(output_path))
+
+
+def plot_ranks(steps: np.ndarray, ranks: np.ndarray) -> None:
+    steps = np.tile(steps, (ranks.shape[0], 1))
+    points = np.stack([steps, ranks], axis=-1).reshape(-1, 2)
+    unique_points, counts = np.unique(points, axis=0, return_counts=True)
+    data = {
+        "Steps": unique_points[:, 0],
+        r"Rank of $G(x, w)$": unique_points[:, 1],
+        "Count": counts,
+    }
+    with plt.style.context("seaborn"):
+        sns.scatterplot(
+            data=data,
+            x="Steps",
+            y=r"Rank of $G(x, w)$",
+            hue="Count",
+            size="Count",
+            sizes=(20, 200),
+            legend="full",
+            palette="coolwarm",
+        )
+        plt.yticks(range(np.max(ranks) + 2))
+        plt.xlabel("Steps")
+        plt.ylabel(r"Rank of $G(x, w)$")
+        plt.title(r"Distribution of rank $G(x, w)$ during training")
+    plt.show()
+
+
+def plot_traces(steps: np.ndarray, traces: np.ndarray) -> None:
+    mean = np.mean(traces, axis=0)
+    exponential_average = pd.Series(mean).ewm(alpha=0.05).mean().to_numpy()
+    with plt.style.context("seaborn"):
+        plt.plot(steps, mean, alpha=0.8)
+        plt.plot(steps, exponential_average, color="r")
+        plt.xlabel("Steps")
+        plt.ylabel(r"Mean trace of $G(x, w)$")
+        plt.title(r"Trace of $G(x, w)$ during training")
+        plt.ylim(bottom=0)
+    plt.show()
