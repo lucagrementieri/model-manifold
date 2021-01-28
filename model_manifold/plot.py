@@ -72,6 +72,6 @@ def save_traces(
         plt.plot(steps, exponential_average, color="r")
         plt.xlabel("Steps")
         plt.ylabel(r"Mean trace of $G(x, w)$")
-        plt.title(r"Trace of $G(x, w)$ during training")
         plt.ylim(bottom=0)
+    plt.tight_layout()
     plt.savefig(str(output_path))
