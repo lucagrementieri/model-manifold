@@ -70,7 +70,7 @@ on the kernel of the data matrix.
 
 You can reproduce the experiment running
 ```
-python3 mnist_kernel.py checkpoint/medium_cnn_08.pt 
+python3 mnist_kernel.py checkpoint/medium_cnn_10.pt 
 ```
 
 Here we report some outputs of the script.
@@ -80,21 +80,20 @@ Here we report some outputs of the script.
 
 ### Moving along the data leaf
 
-To move along the data leaf leaves, the data should evolve along
+To move along the data leaf, data should evolve along
 directions orthogonal to the kernel of the local data matrix.
 In this experiment, we take two valid images in MNIST test set and 
 we let the source image evolve to reach the destination image.
 
 You can reproduce the experiment running
 ```
-python3 mnist_data_leaf.py checkpoint/small_cnn_01.pt 
+python3 mnist_data_leaf.py checkpoint/medium_cnn_10.pt 
 ```
 
 Here we report some outputs of the script.
 
 ![Path data leaf seed 5](outputs/04185_05874.gif)
-![Path data leaf seed 123](outputs/00857_04385.gif)
-![Path data leaf same class](outputs/03898_09709.gif)
+![Path data leaf seed 3](outputs/03898_09709.gif)
 
 Adding the boolean flag `--flip`, it is possible to verify that also
 flipped digits (images that sometimes resemble latin letters)
@@ -107,9 +106,8 @@ python3 mnist_data_leaf.py checkpoint/small_cnn_01.pt --flip
 
 Here we report some outputs of this command.
 
-![Path data leaf flip E](outputs/06349_flip_07001.gif)
-![Path data leaf flip seed 125](outputs/03978_flip_03645.gif)
-![Path data leaf flip seed 1000](outputs/02715_flip_08760.gif)
+![Path data leaf flip E](outputs/00125_flip_06349.gif)
+![Path data leaf flip P](outputs/04200_flip_09792.gif)
 
 ### Moving across leaves in the foliation then along a noisy leaf
 
@@ -118,7 +116,7 @@ along a leaf preserve the noise in the image.
 
 You can reproduce the experiment running
 ```
-python3 mnist_noise_leaf.py checkpoint/small_cnn_01.pt 
+python3 mnist_noise_leaf.py checkpoint/medium_cnn_10.pt 
 ```
 
 Here we report some outputs of the script.

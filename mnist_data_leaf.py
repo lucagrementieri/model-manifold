@@ -34,8 +34,6 @@ def mnist_path(
     if start_idx == -1:
         start_idx = random.randrange(len(test_mnist))
     start_image = test_mnist[start_idx][0].to(device)
-    if flip:
-        start_image = torch.flip(start_image, dims=(-1,))
 
     if end_idx == -1:
         end_idx = random.randrange(len(test_mnist))
@@ -51,7 +49,7 @@ def mnist_path(
         network,
         start_image,
         end_image,
-        steps=10000,
+        steps=5000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
     data_path = denormalize(data_path, normalize)

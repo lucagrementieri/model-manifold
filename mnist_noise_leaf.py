@@ -7,10 +7,8 @@ from typing import Union, Tuple
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from torch.utils.data import Dataset
 
 import mnist_networks
 from model_manifold.inspect import (
@@ -61,7 +59,7 @@ def mnist_noise_path(
         network,
         noisy_start.to(device),
         end_image,
-        steps=10000,
+        steps=5000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
     data_path = denormalize(data_path, normalize)
