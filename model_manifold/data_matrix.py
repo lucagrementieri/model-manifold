@@ -34,6 +34,5 @@ def local_data_matrix_trace(model: nn.Module, x: torch.Tensor) -> float:
     return trace.item()
 
 
-def batch_data_matrix_trace(model: nn.Module, batch: torch.Tensor) -> float:
-    traces = [local_data_matrix_trace(model, x) for x in batch]
-    return torch.tensor(traces).mean().item()
+def batch_data_matrix_trace(model: nn.Module, batch: torch.Tensor) -> torch.Tensor:
+    return torch.tensor([local_data_matrix_trace(model, x) for x in batch])
