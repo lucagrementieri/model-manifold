@@ -1,12 +1,12 @@
-# Model-centric data manifold: the data through the eyes of the model
+# Model-centric Data Manifold: the Data Through the Eyes of the Model
 
 This repository contains the code used to perform the experiments of the paper 
-"Model-centric data manifold: the data through the eyes of the model".
+"Model-centric Data manifold: the Data Through the Eyes of the Model".
 
 ## Getting started
 
 The repository contains:
-- a `checkpoint` directory containing a checkpoint of a small CNN partially trained
+- a `checkpoint` directory containing a checkpoint of a CNN partially trained
 on MNIST and a checkpoint of a VGG11-like network partially trained on CIFAR-10;
 - the package `model_manifold` that includes functions to move along a leaf
 of the foliation as well as to move across different leaves;
@@ -15,7 +15,7 @@ of the foliation as well as to move across different leaves;
 ### Prerequisites
 
 In order to run the code you need to have Python 3.6 or above installed.
-We have performed our experiments with Python 3.8.5.
+We have performed our experiments with Python 3.9.1.
 
 Remember to install all requirements with
 ```
@@ -29,17 +29,16 @@ To reproduce our partial training on MNIST, run
 python3 mnist_training.py
 ```
 
-The command above trains the small CNN defined in `mnist_networks.py` for a single epoch
-to prevent convergence; at the end, it saves a checkpoint in the
-`checkpoint` directory.
+The command above trains the CNN defined in `mnist_networks.py`.
+It saves the checkpoints in the `checkpoint` directory.
+The graph of the mean trace of the local data matrix $G(x, w)$ during training
+is saved in the same directory.
 
 Many configuration parameters can be modified using the script CLI.
 To inspect those parameters it is sufficient to display the help page with  
 ```
 python3 mnist_training.py --help
 ```
-
-Note: If multiple epochs are set, a checkpoint is saved at the end of each of them.
 
 ## Visualizing paths on the foliation
 
@@ -51,13 +50,13 @@ paths in the data domain according to the foliation induced by the model.
 
 The scripts have two effects:
 - they export a `.gif` animation of the evolution in the `outputs` directory;
-- they display an image reporting intermediate steps of the evolution.
+- they save an image reporting intermediate steps of the evolution in the `outputs` directory.
 
 The scripts have these optional parameters:
 - `--start`: the index in the MNIST test set of the source image;
 - `--end`: the index in the MNIST test set of the destination image (if needed);
 - `--seed`: random seed to control the sampling of source and destination image;
-- `--output-dir`: output directory of the .gif.
+- `--output-dir`: output directory.
 
 If `--start` (or `--end`) is not specified, it is chosen at random.
 
@@ -71,14 +70,13 @@ on the kernel of the data matrix.
 
 You can reproduce the experiment running
 ```
-python3 mnist_kernel.py checkpoint/small_cnn_01.pt 
+python3 mnist_kernel.py checkpoint/medium_cnn_08.pt 
 ```
 
 Here we report some outputs of the script.
 
 ![Path across leaves seed 0](outputs/06311_noise.gif)
-![Path across leaves seed 1](outputs/02201_noise.gif)
-![Path across leaves seed 3](outputs/03898_noise.gif)
+![Path across leaves seed 4](outputs/03867_noise.gif)
 
 ### Moving along the data leaf
 

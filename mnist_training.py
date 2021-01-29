@@ -146,5 +146,5 @@ if __name__ == "__main__":
     save_traces(
         global_steps,
         global_traces,
-        output_dir / f"traces_medium_cnn_{epoch + 1:02d}.pdf",
+        output_dir / f"traces_medium_cnn.pdf",
     )
