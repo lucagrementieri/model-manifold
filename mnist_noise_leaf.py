@@ -79,7 +79,7 @@ if __name__ == "__main__":
         "--start", type=int, default=-1, help="Index of the starting image"
     )
     parser.add_argument("--end", type=int, default=-1, help="Index of ending image")
-    parser.add_argument("--seed", type=int, default=20, help="Random seed")
+    parser.add_argument("--seed", type=int, default=100, help="Random seed")
     parser.add_argument(
         "--output-dir",
         type=str,

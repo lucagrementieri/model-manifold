@@ -121,7 +121,6 @@ python3 mnist_noise_leaf.py checkpoint/medium_cnn_10.pt
 
 Here we report some outputs of the script.
 
-![Path noise leaf seed 20](outputs/02477_noise_04257.gif)
-![Path noise leaf seed 40](outputs/09494_noise_08584.gif)
-![Path noise leaf seed 80](outputs/08878_noise_06894.gif)
+![Path noise leaf seed 100](outputs/02386_noise_07528.gif)
+![Path noise leaf seed 200](outputs/00747_noise_03333.gif)
 
