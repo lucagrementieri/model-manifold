@@ -59,7 +59,7 @@ def mnist_noise_path(
         network,
         noisy_start.to(device),
         end_image,
-        steps=5000,
+        steps=10000,
         post_processing=partial(domain_projection, normalization=normalize),
     )
     data_path = denormalize(data_path, normalize)
