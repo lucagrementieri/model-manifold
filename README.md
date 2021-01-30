@@ -22,16 +22,16 @@ Remember to install all requirements with
 python3 -m pip install -r requirements.txt
 ```
 
-## Partial training on MNIST
+## Training on MNIST
 
-To reproduce our partial training on MNIST, run
+To reproduce our training on MNIST, run
 ```
 python3 mnist_training.py
 ```
 
 The command above trains the CNN defined in `mnist_networks.py`.
 It saves the checkpoints in the `checkpoint` directory.
-The graph of the mean trace of the local data matrix $G(x, w)$ during training
+The graph of the mean trace of the local data matrix during training
 is saved in the same directory.
 
 Many configuration parameters can be modified using the script CLI.
