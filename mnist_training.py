@@ -131,7 +131,7 @@ def exemplar_rank_batch(train: bool) -> torch.Tensor:
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
         ),
     )
-    batch_size = 100
+    batch_size = 200
     examples = []
     for i in range(batch_size):
         examples.append(dataset[i][0])
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         global_ranks.append(epoch_ranks)
         global_traces.append(epoch_traces)
         test(model, test_loader)
-        torch.save(model.state_dict(), output_dir / f"small_cnn_{epoch + 1:02d}.pt")
+        torch.save(model.state_dict(), output_dir / f"medium_cnn_{epoch + 1:02d}.pt")
 
     global_steps = torch.cat(global_steps, dim=0)
     global_ranks = torch.cat(global_ranks, dim=1)
