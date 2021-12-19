@@ -9,18 +9,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
-from torch.optim.lr_scheduler import StepLR
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from mnist_networks import small_cnn
-from model_manifold.data_matrix import batch_data_matrix_rank_and_trace
-from model_manifold.plot import plot_ranks, plot_traces
+from mnist_networks import medium_cnn
+from model_manifold.data_matrix import batch_data_matrix_rank, batch_data_matrix_trace
+from model_manifold.plot import save_ranks, save_traces
 
 
 def train_epoch(
-        model: nn.Module, loader: DataLoader, optimizer: Optimizer, epoch: int
+    model: nn.Module, loader: DataLoader, optimizer: Optimizer, epoch: int
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     log_interval = len(loader) // 10
     device = next(model.parameters()).device
@@ -28,6 +27,8 @@ def train_epoch(
     steps = []
     ranks = []
     traces = []
+    reference_trace_batch = exemplar_trace_batch(train=True).to(device)
+    reference_rank_batch = exemplar_rank_batch(train=True).to(device)
     for batch_idx, (data, target) in enumerate(loader, start=1):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -36,7 +37,7 @@ def train_epoch(
         loss.backward()
         if batch_idx % log_interval == 0:
             print(
-                'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
                     batch_idx * len(data),
                     len(train_loader.dataset),
@@ -45,7 +46,8 @@ def train_epoch(
                 )
             )
             steps.append(batch_idx)
-            batch_ranks, batch_traces = batch_data_matrix_rank_and_trace(model, data)
+            batch_traces = batch_data_matrix_trace(model, reference_trace_batch)
+            batch_ranks = batch_data_matrix_rank(model, reference_rank_batch)
             ranks.append(batch_ranks)
             traces.append(batch_traces)
         optimizer.step()
@@ -64,15 +66,18 @@ def test(model: nn.Module, loader: DataLoader) -> float:
         for data, target in loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()
+            test_loss += F.nll_loss(output, target, reduction="sum").item()
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(loader.dataset)
 
     print(
-        '\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            test_loss, correct, len(loader.dataset), 100.0 * correct / len(loader.dataset),
+        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
+            test_loss,
+            correct,
+            len(loader.dataset),
+            100.0 * correct / len(loader.dataset),
         )
     )
     return test_loss
@@ -81,7 +86,7 @@ def test(model: nn.Module, loader: DataLoader) -> float:
 def mnist_loader(batch_size: int, train: bool) -> DataLoader:
     loader = torch.utils.data.DataLoader(
         datasets.MNIST(
-            'data',
+            "data",
             train=train,
             download=True,
             transform=transforms.Compose(
@@ -96,18 +101,59 @@ def mnist_loader(batch_size: int, train: bool) -> DataLoader:
     return loader
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Train a basic model on MNIST',
-        usage='python3 mnist_training.py [--batch-size BATCH-SIZE '
-              '--epochs EPOCHS --lr LR --seed SEED --output-dir OUTPUT-DIR]',
+def exemplar_trace_batch(train: bool) -> torch.Tensor:
+    dataset = datasets.MNIST(
+        "data",
+        train=train,
+        download=True,
+        transform=transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        ),
     )
-    parser.add_argument('--batch-size', type=int, default=60, help='Batch size')
-    parser.add_argument('--epochs', type=int, default=15, help='Number of epochs')
-    parser.add_argument('--lr', type=float, default=0.1, help='Learning rate')
-    parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    batch_size = 4
+    examples = [None] * batch_size
+    for i in range(len(dataset)):
+        img, target = dataset[i]
+        if target < batch_size and examples[target] is None:
+            examples[target] = img
+            if not any(e is None for e in examples):
+                break
+    batch = torch.stack(examples, dim=0)
+    return batch
+
+
+def exemplar_rank_batch(train: bool) -> torch.Tensor:
+    dataset = datasets.MNIST(
+        "data",
+        train=train,
+        download=True,
+        transform=transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        ),
+    )
+    batch_size = 100
+    examples = []
+    for i in range(batch_size):
+        examples.append(dataset[i][0])
+    batch = torch.stack(examples, dim=0)
+    return batch
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Train a basic model on MNIST",
+        usage="python3 mnist_training.py [--batch-size BATCH-SIZE "
+        "--epochs EPOCHS --lr LR --seed SEED --output-dir OUTPUT-DIR]",
+    )
+    parser.add_argument("--batch-size", type=int, default=60, help="Batch size")
+    parser.add_argument("--epochs", type=int, default=30, help="Number of epochs")
+    parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument(
-        '--output-dir', type=str, default='checkpoint', help='Model checkpoint output directory',
+        "--output-dir",
+        type=str,
+        default="checkpoint",
+        help="Model checkpoint output directory",
     )
 
     args = parser.parse_args(sys.argv[1:])
@@ -119,7 +165,7 @@ if __name__ == '__main__':
     output_dir = Path(args.output_dir).expanduser()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    model = small_cnn()
+    model = medium_cnn()
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
 
     train_loader = mnist_loader(args.batch_size, train=True)
@@ -128,7 +174,6 @@ if __name__ == '__main__':
     global_steps = []
     global_ranks = []
     global_traces = []
-    scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
     for epoch in range(args.epochs):
         epoch_steps, epoch_ranks, epoch_traces = train_epoch(
             model, train_loader, optimizer, epoch + 1
@@ -137,11 +182,18 @@ if __name__ == '__main__':
         global_ranks.append(epoch_ranks)
         global_traces.append(epoch_traces)
         test(model, test_loader)
-        torch.save(model.state_dict(), output_dir / f'small_cnn_{epoch + 1:02d}.pt')
-        scheduler.step()
+        torch.save(model.state_dict(), output_dir / f"small_cnn_{epoch + 1:02d}.pt")
 
     global_steps = torch.cat(global_steps, dim=0)
     global_ranks = torch.cat(global_ranks, dim=1)
     global_traces = torch.cat(global_traces, dim=1)
-    plot_ranks(global_steps.cpu().numpy(), global_ranks.cpu().numpy())
-    plot_traces(global_steps.cpu().numpy(), global_traces.cpu().numpy())
+    save_traces(
+        global_steps,
+        global_traces,
+        output_dir / "traces_medium_cnn.pdf",
+    )
+    save_ranks(
+        global_steps,
+        global_ranks,
+        output_dir / "ranks_medium_cnn.pdf",
+    )

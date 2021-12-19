@@ -10,16 +10,14 @@ from tqdm import trange
 
 def project_kernel(jac: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
     kernel_basis = torch.qr(jac, some=False).Q[:, jac.shape[1] - 1:]
-    coefficients = torch.lstsq(direction.unsqueeze(1), kernel_basis).solution
-    coefficients = coefficients[: kernel_basis.shape[1], 0]
-    displacement = torch.matmul(kernel_basis, coefficients)
+    coefficients = torch.linalg.lstsq(kernel_basis, direction).solution
+    displacement = torch.mv(kernel_basis, coefficients)
     return displacement
 
 
 def project_tangent(jac: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
-    coefficients = torch.lstsq(direction.unsqueeze(1), jac).solution
-    coefficients = coefficients[: jac.shape[1], 0]
-    displacement = torch.matmul(jac, coefficients)
+    coefficients = torch.linalg.lstsq(jac, direction).solution
+    displacement = torch.mv(jac, coefficients)
     return displacement
 
 
@@ -187,10 +185,13 @@ def path_tangent(
 
 
 def domain_projection(
-        x: torch.Tensor,
-        normalization: transforms.Normalize,
+        x: torch.Tensor, normalization: transforms.Normalize,
         domain: Tuple[float, float] = (0.0, 1.0),
 ) -> torch.Tensor:
-    inf = torch.tensor(domain[0]).reshape(1, 1, 1)
-    sup = torch.tensor(domain[1]).reshape(1, 1, 1)
-    return torch.clamp(x, normalization(inf).item(), normalization(sup).item())
+    inf = torch.tensor(domain[0]).repeat(x.shape[0], 1, 1)
+    sup = torch.tensor(domain[1]).repeat(x.shape[0], 1, 1)
+    normalized_inf = normalization(inf).reshape(x.shape[0])
+    normalized_sup = normalization(sup).reshape(x.shape[0])
+    for i in range(x.shape[0]):
+        x[i] = torch.clamp(x[i], normalized_inf[i], normalized_sup[i])
+    return x
