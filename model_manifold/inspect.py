@@ -10,16 +10,14 @@ from tqdm import trange
 
 def project_kernel(jac: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
     kernel_basis = torch.qr(jac, some=False).Q[:, jac.shape[1] - 1:]
-    coefficients = torch.lstsq(direction.unsqueeze(1), kernel_basis).solution
-    coefficients = coefficients[: kernel_basis.shape[1], 0]
-    displacement = torch.matmul(kernel_basis, coefficients)
+    coefficients = torch.linalg.lstsq(kernel_basis, direction).solution
+    displacement = torch.mv(kernel_basis, coefficients)
     return displacement
 
 
 def project_tangent(jac: torch.Tensor, direction: torch.Tensor) -> torch.Tensor:
-    coefficients = torch.lstsq(direction.unsqueeze(1), jac).solution
-    coefficients = coefficients[: jac.shape[1], 0]
-    displacement = torch.matmul(jac, coefficients)
+    coefficients = torch.linalg.lstsq(jac, direction).solution
+    displacement = torch.mv(jac, coefficients)
     return displacement
 
 

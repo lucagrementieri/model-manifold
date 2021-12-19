@@ -26,6 +26,7 @@ def train_epoch(
     model.train()
     steps = []
     traces = []
+    reference_batch = exemplar_batch(train=True).to(device)
     for batch_idx, (data, target) in enumerate(loader, start=1):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -43,7 +44,7 @@ def train_epoch(
                 )
             )
             steps.append(batch_idx)
-            batch_traces = batch_data_matrix_trace(model, data)
+            batch_traces = batch_data_matrix_trace(model, reference_batch)
             traces.append(batch_traces)
         optimizer.step()
     steps = torch.tensor(steps)
@@ -93,6 +94,28 @@ def mnist_loader(batch_size: int, train: bool) -> DataLoader:
         pin_memory=True,
     )
     return loader
+
+
+def exemplar_batch(train: bool) -> torch.Tensor:
+    dataset = datasets.MNIST(
+        "data",
+        train=train,
+        download=True,
+        transform=transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        ),
+    )
+    batch_size = 4
+    examples = [None] * batch_size
+    for i in range(len(dataset)):
+        img, target = dataset[i]
+        if target < batch_size and examples[target] is None:
+            print(f"Selected image {i} associated to class {target}.")
+            examples[target] = img
+            if not any(e is None for e in examples):
+                break
+    batch = torch.stack(examples, dim=0)
+    return batch
 
 
 if __name__ == "__main__":
@@ -146,5 +169,5 @@ if __name__ == "__main__":
     save_traces(
         global_steps,
         global_traces,
-        output_dir / f"traces_medium_cnn.pdf",
+        output_dir / "traces_medium_cnn.pdf",
     )

@@ -65,13 +65,23 @@ def save_traces(
 ) -> None:
     steps = steps.cpu().numpy()
     traces = traces.cpu().numpy()
-    mean = np.mean(traces, axis=0)
-    exponential_average = pd.Series(mean).ewm(alpha=0.05).mean().to_numpy()
+    colors = (
+        "tab:blue",
+        "tab:orange",
+        "tab:green",
+        "tab:red",
+        "tab:purple",
+        "tab:brown",
+        "tab:pink",
+        "tab:gray",
+        "tab:olive",
+        "tab:cyan",
+    )
     with plt.style.context("seaborn"):
-        plt.plot(steps, mean, alpha=0.8)
-        plt.plot(steps, exponential_average, color="r")
+        for i in range(len(traces)):
+            plt.plot(steps, traces[i], color=colors[i % len(colors)])
         plt.xlabel("Steps")
-        plt.ylabel(r"Mean trace of $G(x, w)$")
+        plt.ylabel(r"Trace of $G(x, w)$")
         plt.ylim(bottom=0)
     plt.tight_layout()
     plt.savefig(str(output_path))
