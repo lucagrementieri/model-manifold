@@ -14,8 +14,8 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from mnist_networks import medium_cnn
-from model_manifold.data_matrix import batch_data_matrix_rank, batch_data_matrix_trace
-from model_manifold.plot import save_ranks, save_traces
+from model_manifold.data_matrix import batch_data_matrix_trace_rank
+from model_manifold.plot import save_ranks, save_mean_trace
 
 
 def train_epoch(
@@ -27,8 +27,7 @@ def train_epoch(
     steps = []
     ranks = []
     traces = []
-    reference_trace_batch = exemplar_trace_batch(train=True).to(device)
-    reference_rank_batch = exemplar_rank_batch(train=True).to(device)
+    reference_batch = exemplar_batch(1000, train=True).to(device)
     for batch_idx, (data, target) in enumerate(loader, start=1):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -46,10 +45,11 @@ def train_epoch(
                 )
             )
             steps.append(batch_idx)
-            batch_traces = batch_data_matrix_trace(model, reference_trace_batch)
-            batch_ranks = batch_data_matrix_rank(model, reference_rank_batch)
-            ranks.append(batch_ranks)
+            batch_traces, batch_ranks = batch_data_matrix_trace_rank(
+                model, reference_batch
+            )
             traces.append(batch_traces)
+            ranks.append(batch_ranks)
         optimizer.step()
     steps = torch.tensor(steps)
     ranks = torch.stack(ranks, dim=1)
@@ -101,7 +101,7 @@ def mnist_loader(batch_size: int, train: bool) -> DataLoader:
     return loader
 
 
-def exemplar_trace_batch(train: bool) -> torch.Tensor:
+def exemplar_batch(batch_size: int, train: bool) -> torch.Tensor:
     dataset = datasets.MNIST(
         "data",
         train=train,
@@ -110,28 +110,6 @@ def exemplar_trace_batch(train: bool) -> torch.Tensor:
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
         ),
     )
-    batch_size = 4
-    examples = [None] * batch_size
-    for i in range(len(dataset)):
-        img, target = dataset[i]
-        if target < batch_size and examples[target] is None:
-            examples[target] = img
-            if not any(e is None for e in examples):
-                break
-    batch = torch.stack(examples, dim=0)
-    return batch
-
-
-def exemplar_rank_batch(train: bool) -> torch.Tensor:
-    dataset = datasets.MNIST(
-        "data",
-        train=train,
-        download=True,
-        transform=transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-        ),
-    )
-    batch_size = 200
     examples = []
     for i in range(batch_size):
         examples.append(dataset[i][0])
@@ -187,7 +165,7 @@ if __name__ == "__main__":
     global_steps = torch.cat(global_steps, dim=0)
     global_ranks = torch.cat(global_ranks, dim=1)
     global_traces = torch.cat(global_traces, dim=1)
-    save_traces(
+    save_mean_trace(
         global_steps,
         global_traces,
         output_dir / "traces_medium_cnn.pdf",

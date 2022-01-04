@@ -119,3 +119,19 @@ def save_traces(
         plt.ylim(bottom=0)
     plt.tight_layout()
     plt.savefig(str(output_path))
+
+
+def save_mean_trace(
+    steps: torch.Tensor, traces: torch.Tensor, output_path: Union[str, Path]
+) -> None:
+    steps = steps.cpu().numpy()
+    traces = traces.cpu().numpy()
+    mean_trace = np.mean(traces, axis=0)
+    plt.clf()
+    with plt.style.context("seaborn"):
+        plt.plot(steps, mean_trace)
+        plt.xlabel("Steps")
+        plt.ylabel(r"Mean trace of $G(x, w)$")
+        plt.ylim(bottom=0)
+    plt.tight_layout()
+    plt.savefig(str(output_path))
